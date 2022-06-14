@@ -12,32 +12,24 @@ env.hosts = ['34.138.32.248, '3.226.74.205']
 
 
 def do_deploy(archive_path):
-    '''distributes an archive to my web servers'''
-    if not exists(archive_path):
+    """
+    Deploy archive to web server
+    """
+    if os.path.isfile(archive_path) is False:
         return False
     try:
-        file_name = archive_path.split("/")[-1].split(".")[0]
+        filename = archive_path.split("/")[-1]
+        no_ext = filename.split(".")[0]
+        path_no_ext = "/data/web_static/releases/{}/".format(no_ext)
+        symlink = "/data/web_static/current"
         put(archive_path, "/tmp/")
-
-        run("mkdir -p /data/web_static/releases/{}".format(file_name))
-
-        run("tar -xzf /tmp/{}.tgz -C /data/web_static/releases/{}/"
-            .format(file_name, file_name))
-
-        run('rm -rf /tmp/{}.tgz'.format(file_name))
-
-        run(('mv /data/web_static/releases/{}/web_static/* ' +
-            '/data/web_static/releases/{}/')
-            .format(file_name, file_name))
-
-        run('rm -rf /data/web_static/releases/{}/web_static'
-            .format(file_name))
-
-        run('rm -rf /data/web_static/current')
-
-        run(('ln -s /data/web_static/releases/{}/' +
-            ' /data/web_static/current')
-            .format(file_name))
+        run("mkdir -p {}".format(path_no_ext))
+        run("tar -xzf /tmp/{} -C {}".format(filename, path_no_ext))
+        run("rm /tmp/{}".format(filename))
+        run("mv {}web_static/* {}".format(path_no_ext, path_no_ext))
+        run("rm -rf {}web_static".format(path_no_ext))
+        run("rm -rf {}".format(symlink))
+        run("ln -s {} {}".format(path_no_ext, symlink))
         return True
-    except Exception:
+    except:
         return False
